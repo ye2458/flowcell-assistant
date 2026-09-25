@@ -144,7 +144,7 @@ python -m eval.run_eval
 - [x] **확인 완료**: `.env` / `docs/_private/` / `data/vectordb/` 모두 제외됨
 - [x] `CLAUDE.md` 와 `docs/QUIZ.md` 도 제외 (작업 방식·학습용 문서 — 공개 여부는 본인 판단)
 - [ ] 깃허브 원격 저장소 생성 후 push ← **본인 계정 인증 필요**
-      `gh repo create cellnex-assistant --private --source=. --push`
+      원격: `ye2458/flowcell-assistant` (푸시 완료)
 
 ---
 
