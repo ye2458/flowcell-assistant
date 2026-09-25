@@ -1,0 +1,18 @@
+# ASCII only. pip reads this file with the system locale encoding on Windows (cp949),
+# so non-ASCII characters here will crash the install.
+# After a successful install, run:  pip freeze > requirements.lock.txt
+# Do NOT upgrade these packages once the project works. LangChain breaks across minor versions.
+
+langgraph
+langchain-core
+langchain-openai
+langchain-chroma
+langchain-text-splitters
+chromadb
+
+fastapi
+uvicorn[standard]
+
+pandas
+python-dotenv
+pydantic

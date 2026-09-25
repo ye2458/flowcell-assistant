@@ -1,0 +1,20 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+data/vectordb/
+eval/results_*.csv
+# 단, 최종 채점본은 산출물이므로 올린다
+!eval/results_FINAL_*.csv
+.DS_Store
+.ipynb_checkpoints/
+
+# 지원 관련 비공개 메모 — 공개 저장소에 올리지 않는다
+docs/_private/
+
+# 학습용 내부 문서 — 공개 저장소에 올릴지는 본인이 판단할 것.
+# CLAUDE.md 는 작업 방식·개인 배경이 적혀 있고, QUIZ.md 는 학습 점검용이다.
+# 공개하려면 아래 두 줄을 지우면 된다.
+CLAUDE.md
+docs/QUIZ.md
