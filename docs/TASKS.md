@@ -136,12 +136,27 @@ python -m eval.run_eval
 
 ---
 
-## T9 — 기록  ← **현재 여기**
+## T9 — 기록 ✅ 거의 완료
 
 - [x] `docs/TROUBLESHOOTING.md` 항목 5개로 정리 → README에 트러블슈팅 절 추가
 - [x] 평가 결과표 + 파라미터 비교표를 README에 붙이기
-- [ ] 깃허브 저장소 생성 후 push
-- [ ] **push 전 확인**: `.env`, `docs/_private/` 가 올라가지 않는지
+- [x] `git init` + 첫 커밋 완료 (28개 파일, 커밋 `0e5c833`)
+- [x] **확인 완료**: `.env` / `docs/_private/` / `data/vectordb/` 모두 제외됨
+- [x] `CLAUDE.md` 와 `docs/QUIZ.md` 도 제외 (작업 방식·학습용 문서 — 공개 여부는 본인 판단)
+- [ ] 깃허브 원격 저장소 생성 후 push ← **본인 계정 인증 필요**
+      `gh repo create cellnex-assistant --private --source=. --push`
+
+---
+
+## 남은 작업 (2개, 본인이 해야 함)
+
+1. **API 스크린샷** (T6) — `uvicorn src.api:app --reload` → `/docs` 접속 → `/ask` 호출 후 캡처
+2. **GitHub push** — 위 명령 (private 로 먼저 만들고 내용 확인 후 public 전환 권장)
+
+## 다음 단계: 이해도 확인
+
+`docs/QUIZ.md` 의 문항에 답하기. 정답은 `docs/_private/QUIZ_ANSWERS.md` 에 있으나
+**먼저 답한 뒤에** 펼칠 것.
 
 ---
 
