@@ -72,10 +72,15 @@ python -m eval.run_eval
 # 5b) 검색 품질 측정 — RAG 파라미터를 비교할 때 쓴다
 python -m eval.retrieval_check
 
-# 6) API 서버
+# 6) 질문 한 번 — 서버 없이 (가장 빠름)
+python -m scripts.ask "라벨 품질 이슈가 뭐였죠?"
+
+# 7) API 서버
 uvicorn src.api:app --reload
 #   → http://127.0.0.1:8000/docs 에서 바로 호출해볼 수 있다
 ```
+
+CLI와 API는 **같은 `ask()` 함수**를 부른다. 진입점이 둘이어도 답이 갈리지 않는다.
 
 ---
 
@@ -87,6 +92,7 @@ src/ingest.py    문서 → 청크 → 임베딩 → Chroma 저장
 src/tools.py     ★ 도구 3개 정의 — 이 프로젝트의 핵심 설계
 src/agent.py     LangGraph ReAct 루프 (agent ↔ tools)
 src/api.py       FastAPI /ask 엔드포인트
+scripts/ask.py          CLI 진입점 — 터미널에서 질문 한 번
 eval/run_eval.py        평가 20문항 실행기 — 도구 선택 정확도
 eval/retrieval_check.py 검색 품질 측정기 — 정답이 실제로 검색됐는지
 data/docs/       RAG 코퍼스 (검사 기준·실험 이력·라벨 이슈·배포 사양)
