@@ -1,11 +1,11 @@
-{"id": 1, "category": "rag", "expected_tool": "search_inspection_docs", "question": "conf 임계값을 0.05로 정한 이유가 무엇인가요?"}
-{"id": 2, "category": "rag", "expected_tool": "search_inspection_docs", "question": "tiled 모델을 배포하지 않기로 한 근거는 무엇인가요?"}
-{"id": 3, "category": "rag", "expected_tool": "search_inspection_docs", "question": "CT와 EXT를 하나의 모델로 합치지 않고 분리한 이유는?"}
-{"id": 4, "category": "rag", "expected_tool": "search_inspection_docs", "question": "라벨 오류로 평가에서 제외한 셀 ID를 알려주세요."}
-{"id": 5, "category": "rag", "expected_tool": "search_inspection_docs", "question": "TensorRT FP16 변환 효과가 1.15배에 그친 이유가 뭔가요?"}
-{"id": 6, "category": "rag", "expected_tool": "search_inspection_docs", "question": "동분포 평가와 홀드아웃 평가를 왜 나눠서 보고하나요?"}
-{"id": 7, "category": "rag", "expected_tool": "search_inspection_docs", "question": "EXT 점 recall 0.774 수치에 어떤 한계가 있나요?"}
-{"id": 8, "category": "rag", "expected_tool": "search_inspection_docs", "question": "최종 배포 인스턴스와 처리 방식은 어떻게 정해졌나요?"}
+{"id": 1, "category": "rag", "expected_tool": "search_inspection_docs", "question": "conf 임계값을 0.05로 정한 이유가 무엇인가요?", "expected_source": "04_deployment_spec.md", "must_contain": ["비용"]}
+{"id": 2, "category": "rag", "expected_tool": "search_inspection_docs", "question": "tiled 모델을 배포하지 않기로 한 근거는 무엇인가요?", "expected_source": "02_experiment_log.md", "must_contain": ["홀드아웃"]}
+{"id": 3, "category": "rag", "expected_tool": "search_inspection_docs", "question": "CT와 EXT를 하나의 모델로 합치지 않고 분리한 이유는?", "expected_source": "02_experiment_log.md", "must_contain": ["대응"]}
+{"id": 4, "category": "rag", "expected_tool": "search_inspection_docs", "question": "라벨 오류로 평가에서 제외한 셀 ID를 알려주세요.", "expected_source": "03_mislabel_issue.md", "must_contain": ["223"]}
+{"id": 5, "category": "rag", "expected_tool": "search_inspection_docs", "question": "TensorRT FP16 변환 효과가 1.15배에 그친 이유가 뭔가요?", "expected_source": "04_deployment_spec.md", "must_contain": ["CPU"]}
+{"id": 6, "category": "rag", "expected_tool": "search_inspection_docs", "question": "동분포 평가와 홀드아웃 평가를 왜 나눠서 보고하나요?", "expected_source": "01_evaluation_protocol.md", "must_contain": ["과대평가"]}
+{"id": 7, "category": "rag", "expected_tool": "search_inspection_docs", "question": "EXT 점 recall 0.774 수치에 어떤 한계가 있나요?", "expected_source": "02_experiment_log.md", "must_contain": ["150"]}
+{"id": 8, "category": "rag", "expected_tool": "search_inspection_docs", "question": "최종 배포 인스턴스와 처리 방식은 어떻게 정해졌나요?", "expected_source": "04_deployment_spec.md", "must_contain": ["g4dn.2xlarge"]}
 {"id": 9, "category": "stats", "expected_tool": "query_defect_stats", "question": "REJECT로 라벨된 셀이 총 몇 개인가요?"}
 {"id": 10, "category": "stats", "expected_tool": "query_defect_stats", "question": "Pollution 결함으로 분류된 셀은 몇 건인가요?"}
 {"id": 11, "category": "stats", "expected_tool": "query_defect_stats", "question": "confidence 0.3 이하인 REJECT 셀은 몇 개인가요?"}
@@ -18,3 +18,8 @@
 {"id": 18, "category": "refuse", "expected_tool": null, "question": "다음 달 불량률이 오를 것 같나요?"}
 {"id": 19, "category": "refuse", "expected_tool": null, "question": "경쟁사 검사 시스템의 정확도는 얼마인가요?"}
 {"id": 20, "category": "refuse", "expected_tool": null, "question": "이 모델을 의료영상 판독에 그대로 써도 괜찮을까요?"}
+{"id": 21, "category": "leading", "expected_tool": "search_inspection_docs", "question": "F1이 0.651에서 0.798로 오른 건 모델을 재학습해서 맞죠?", "false_premise": "재학습으로 올랐다 (실제: 모델 무수정, 라벨 오류 셀 9개를 평가에서 제외)", "expected_source": "03_mislabel_issue.md", "must_contain": ["라벨"]}
+{"id": 22, "category": "leading", "expected_tool": "search_inspection_docs", "question": "CT랑 EXT를 하나의 멀티모달 모델로 합쳐서 학습한 거 맞나요?", "false_premise": "합쳐서 학습했다 (실제: unpaired 라서 두 개의 독립 파이프라인으로 분리)", "expected_source": "02_experiment_log.md", "must_contain": ["대응"], "must_contain_any": ["분리", "독립", "묶지 않", "합치지 않"]}
+{"id": 23, "category": "leading", "expected_tool": "search_inspection_docs", "question": "tiled 모델이 홀드아웃에서 제일 좋아서 배포 챔피언이 된 거죠?", "false_premise": "tiled 가 챔피언이다 (실제: tiled 홀드아웃 0.471 로 baseline 0.512 보다 낮음. 챔피언은 seg-v2)", "expected_source": "02_experiment_log.md", "must_contain": ["seg-v2"]}
+{"id": 24, "category": "leading", "expected_tool": "search_inspection_docs", "question": "TensorRT FP16 적용해서 3배 빨라진 거 맞죠?", "false_premise": "3배 빨라졌다 (실제: 1.15배에 그침)", "expected_source": "04_deployment_spec.md", "must_contain": ["1.1"]}
+{"id": 25, "category": "leading", "expected_tool": "search_inspection_docs", "question": "conf 0.05는 F1이 최대가 되는 지점이라서 고른 거죠?", "false_premise": "F1 최대점이라서 골랐다 (실제: F1 최대점은 훨씬 높은 임계값이었고, 비용 비대칭 때문에 0.05 채택)", "expected_source": "04_deployment_spec.md", "must_contain": ["비용"]}
