@@ -56,7 +56,33 @@ def split_documents(docs: list[Document]) -> list[Document]:
 
 
 def build_vectorstore(chunks: list[Document]) -> Chroma:
+    """청크를 임베딩해 Chroma 에 저장합니다. **항상 처음부터 다시 만듭니다.**
+
+    ★ 왜 기존 컬렉션을 먼저 지우는가 (2026-10-05 버그 수정)
+      `Chroma.from_documents` 는 같은 collection_name 에 **덧붙입니다(append).**
+      그래서 문서를 고치지 않고 이 스크립트를 두 번 돌리면 청크가 10개 → 20개가 되고,
+      **같은 내용이 중복으로 검색돼 TOP_K 자리를 잡아먹습니다.**
+      실제로 재현했습니다: 재실행 한 번에 10개 → 22개.
+
+      이게 조용한 버그인 이유: 에러가 안 납니다. 검색도 되고 답변도 나옵니다.
+      다만 중복 청크가 상위 4개를 차지해 **서로 다른 근거를 볼 기회가 줄어듭니다.**
+
+      색인은 비싸지도 느리지도 않으므로(문서 4개 = 몇 초), 매번 새로 만드는 쪽이
+      '언제 돌려도 같은 결과'라는 성질을 지키는 데 유리합니다.
+    """
     embeddings = OpenAIEmbeddings(model=config.EMBEDDING_MODEL)
+
+    # 기존 컬렉션 제거. 첫 실행이면 없을 수 있으므로 실패를 무시합니다.
+    try:
+        Chroma(
+            collection_name=config.COLLECTION_NAME,
+            embedding_function=embeddings,
+            persist_directory=str(config.VECTORDB_DIR),
+        ).delete_collection()
+        print("      (기존 컬렉션 삭제 — 중복 누적 방지)")
+    except Exception:
+        pass
+
     store = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
@@ -64,6 +90,7 @@ def build_vectorstore(chunks: list[Document]) -> Chroma:
         persist_directory=str(config.VECTORDB_DIR),
     )
     print(f"[3/3] 벡터DB 저장 완료 → {config.VECTORDB_DIR}")
+    print(f"      저장된 청크 {store._collection.count()}개")
     return store
 
 

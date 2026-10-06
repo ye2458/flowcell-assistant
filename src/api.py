@@ -21,20 +21,39 @@ API로 감싸는 순간 대시보드, 다른 서비스, 다른 팀이 같은 기
 - 인증이 없습니다. 사내망 가정입니다.
 """
 
-from fastapi import FastAPI
+import traceback
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from src import config
 from src.agent import ask
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """서버가 뜰 때 설정을 먼저 확인합니다.
+
+    ★ 왜 여기서 확인하는가 (2026-10-06 추가)
+      전에는 .env 가 없어도 서버가 멀쩡히 뜨고, **첫 요청에서야** 알 수 없는 오류로
+      터졌습니다. 띄우는 사람과 호출하는 사람이 다를 수 있으므로,
+      잘못된 설정은 **가장 이른 시점에, 읽을 수 있는 말로** 실패해야 합니다.
+    """
+    config.check()
+    yield
+
 
 app = FastAPI(
     title="CELLNEX Inspection Assistant",
     description="이차전지 셀 검사 운영 어시스턴트 (RAG + Tool-calling Agent)",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 
 class AskRequest(BaseModel):
-    question: str = Field(..., description="검사 운영에 대한 질문")
+    question: str = Field(..., min_length=1, description="검사 운영에 대한 질문")
 
 
 class AskResponse(BaseModel):
@@ -50,5 +69,26 @@ def health() -> dict:
 
 @app.post("/ask", response_model=AskResponse)
 def ask_endpoint(req: AskRequest) -> AskResponse:
-    result = ask(req.question)
+    question = req.question.strip()
+    if not question:
+        raise HTTPException(status_code=422, detail="질문이 비어 있습니다.")
+
+    try:
+        result = ask(question)
+    except Exception as e:
+        # ★ 외부 호출(LLM API)은 언제든 실패합니다 — 쿼터 소진, 네트워크, 타임아웃.
+        #   처리하지 않으면 FastAPI 가 500 과 함께 스택트레이스를 띄웁니다.
+        #   그러면 (1) 호출한 쪽은 무엇을 해야 할지 모르고
+        #   (2) 내부 경로와 라이브러리 구성이 밖으로 드러납니다.
+        #
+        #   그래서 전체 내용은 **서버 로그에만** 남기고, 응답에는 오류 종류만 돌려줍니다.
+        #   502 를 쓰는 이유: 우리 코드가 아니라 **상위 서비스(LLM API)가 실패**한 것이고,
+        #   호출한 쪽은 '잠시 후 재시도'가 올바른 대응이기 때문입니다.
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=502,
+            detail=f"질의 처리에 실패했습니다 ({type(e).__name__}). "
+                   "LLM API 상태와 크레딧 잔액을 확인한 뒤 다시 시도하세요.",
+        ) from e
+
     return AskResponse(**result)

@@ -45,6 +45,32 @@ def _results() -> pd.DataFrame:
     return _df
 
 
+# 벡터DB 핸들도 한 번만 열어 재사용합니다.
+_store = None
+
+
+def _vectorstore():
+    """열려 있는 벡터DB를 돌려줍니다. 처음 호출될 때 한 번만 엽니다.
+
+    ★ 왜 캐시하는가 (2026-10-06 수정)
+      전에는 검색할 때마다 get_vectorstore() 를 불렀습니다. 그 함수는 호출될 때마다
+      OpenAIEmbeddings 객체와 Chroma 클라이언트를 **새로 만듭니다.**
+      기능은 맞지만 질문 한 번에 DB를 다시 여는 셈이라, 서버로 띄워 두고
+      여러 요청을 받을수록 손해가 쌓입니다.
+
+      표(_results)를 이미 같은 방식으로 캐시하고 있었으므로, 읽기 전용 자원은
+      같은 규칙으로 다루는 편이 코드가 읽기 쉽습니다.
+
+      주의: 색인을 다시 만들면(python -m src.ingest) 이 프로세스는 옛 핸들을 들고
+      있을 수 있습니다. 색인은 별도 프로세스로 돌리므로 실제로는 문제가 없지만,
+      서버를 띄운 채 재색인했다면 서버를 다시 시작해야 합니다.
+    """
+    global _store
+    if _store is None:
+        _store = get_vectorstore()
+    return _store
+
+
 # ★ 계산 결과임을 도구 출력 자체에 박아 넣는 표시.
 #
 # [왜 프롬프트가 아니라 여기인가 — 두 번 배운 교훈]
@@ -79,8 +105,7 @@ def search_inspection_docs(query: str) -> str:
         query: 찾고자 하는 내용 (예: "conf 임계값을 0.05로 정한 이유")
     """
     # [흐름] 질문(str) → 벡터DB 검색 → Document 리스트 → 출처가 붙은 문자열 1개
-    store = get_vectorstore()
-    documents = store.similarity_search(query, k=config.TOP_K)
+    documents = _vectorstore().similarity_search(query, k=config.TOP_K)
 
     # 검색 결과가 0건일 때 빈 문자열을 돌려주지 않습니다.
     # 빈 문자열을 받은 LLM은 '근거가 없다'가 아니라 '도구가 고장났다'고 해석하거나,
@@ -136,8 +161,21 @@ def query_defect_stats(
         applied_filters.append(f"판정={verdict.upper()}")
 
     if defect_type is not None:
-        df = df[df["defect_type"] == defect_type]
-        applied_filters.append(f"결함종류={defect_type}")
+        # ★ 대소문자를 무시하고 맞춥니다 (2026-10-06 버그 수정).
+        #   표에는 "Pollution" 으로 저장돼 있는데, LLM 이 질문 문장을 그대로 옮겨
+        #   "pollution" 을 넘기면 정확히 일치하는 행이 없어 **0건**이 나옵니다.
+        #   문제는 에러가 아니라 "0건입니다" 라는 **그럴듯한 오답**이 나간다는 점입니다.
+        #   verdict 는 .upper() 로 막아뒀는데 여기만 빠져 있어 동작이 비일관했습니다.
+        #
+        #   casefold() 를 쓴 이유: lower() 보다 넓은 범위를 정규화합니다.
+        #   defect_type 이 비어 있는 행(PASS 셀)은 NaN 이라 비교 결과가 False 가 되므로
+        #   따로 걸러낼 필요가 없습니다.
+        matches = df["defect_type"].str.casefold() == defect_type.casefold()
+        found = df.loc[matches, "defect_type"]
+        # 표에 실제로 적힌 철자를 되돌려줍니다. 사용자가 무엇으로 센 것인지 분명해집니다.
+        canonical = found.iloc[0] if len(found) else defect_type
+        df = df[matches]
+        applied_filters.append(f"결함종류={canonical}")
 
     if max_confidence is not None:
         df = df[df["pred_score"] <= max_confidence]
