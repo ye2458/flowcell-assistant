@@ -72,7 +72,11 @@ def build_vectorstore(chunks: list[Document]) -> Chroma:
     """
     embeddings = OpenAIEmbeddings(model=config.EMBEDDING_MODEL)
 
-    # 기존 컬렉션 제거. 첫 실행이면 없을 수 있으므로 실패를 무시합니다.
+    # 기존 컬렉션 제거. 첫 실행이면 없는 게 정상이므로 그때만 조용히 넘어갑니다.
+    #
+    # ★ except 로 전부 삼키지 않는 이유: 삭제가 실패하는 진짜 이유(sqlite 잠김,
+    #   읽기 전용 디렉터리)를 숨기면, 바로 이 함수가 막으려던 '중복 누적'이
+    #   아무 경고 없이 되살아납니다. 실패를 보이게 두는 편이 안전합니다.
     try:
         Chroma(
             collection_name=config.COLLECTION_NAME,
@@ -80,8 +84,15 @@ def build_vectorstore(chunks: list[Document]) -> Chroma:
             persist_directory=str(config.VECTORDB_DIR),
         ).delete_collection()
         print("      (기존 컬렉션 삭제 — 중복 누적 방지)")
-    except Exception:
-        pass
+    except Exception as e:
+        # 컬렉션이 아직 없을 때 나는 오류만 정상으로 봅니다.
+        if "does not exist" not in str(e).lower() and "not found" not in str(e).lower():
+            raise RuntimeError(
+                f"기존 컬렉션을 지우지 못했습니다: {type(e).__name__}: {e} / "
+                f"그대로 진행하면 청크가 중복 누적됩니다. "
+                f"{config.VECTORDB_DIR} 를 직접 지운 뒤 다시 실행하세요."
+            ) from e
+        print("      (기존 컬렉션 없음 — 새로 만듭니다)")
 
     store = Chroma.from_documents(
         documents=chunks,

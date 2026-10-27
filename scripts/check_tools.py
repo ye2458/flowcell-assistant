@@ -34,18 +34,6 @@ if hasattr(sys.stdout, "buffer"):
 _passed = 0
 
 
-def check(label: str, got, expected) -> None:
-    """기대값과 실제값을 비교하고, 다르면 **즉시 멈춥니다.**
-
-    실패를 모아서 끝에 보고하지 않는 이유: 계산이 틀어지면 뒤 항목도 줄줄이 틀립니다.
-    첫 번째 불일치가 거의 항상 원인이므로, 거기서 멈추는 쪽이 읽기 쉽습니다.
-    """
-    global _passed
-    assert got == expected, f"\n  [실패] {label}\n    기대: {expected!r}\n    실제: {got!r}"
-    _passed += 1
-    print(f"  OK  {label}")
-
-
 def contains(label: str, haystack: str, needle: str) -> None:
     global _passed
     assert needle in haystack, f"\n  [실패] {label}\n    '{needle}' 가 없음\n    실제: {haystack!r}"

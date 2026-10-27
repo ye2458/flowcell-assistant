@@ -21,6 +21,7 @@
 import csv
 import glob
 import io
+import os
 import sys
 
 from src import config
@@ -78,8 +79,9 @@ def main() -> None:
         rows = list(csv.DictReader(f))
 
     fields = list(rows[0].keys())
-    if "grading_note_MANUAL" not in fields:
-        fields.append("grading_note_MANUAL")
+    for col in ("grading_note_MANUAL", "graded_from_MANUAL"):
+        if col not in fields:
+            fields.append(col)
 
     for r in rows:
         qid = int(r["id"])
@@ -89,6 +91,10 @@ def main() -> None:
         r["answer_correct_MANUAL"] = ac
         r["hallucination_MANUAL"] = hl
         r["grading_note_MANUAL"] = why
+        # ★ 어느 실행을 채점한 것인지 각 행에 남깁니다.
+        #   수동 채점은 '그 실행의 답변'을 보고 매긴 것이라, 평가를 다시 돌리면
+        #   답변이 달라져 점수가 낡습니다. 출처를 적어두면 그걸 알아챌 수 있습니다.
+        r["graded_from_MANUAL"] = os.path.basename(src)
 
     dst = config.EVAL_DIR / f"results_FINAL_chunk{config.CHUNK_SIZE}_topk{config.TOP_K}.csv"
     with io.open(dst, "w", encoding="utf-8-sig", newline="") as f:

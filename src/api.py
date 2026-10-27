@@ -4,7 +4,7 @@ FastAPI 서빙.
 실행:  uvicorn src.api:app --reload
 확인:  브라우저에서 http://127.0.0.1:8000/docs
 
-[왜 API로 감싸는가 — 자소서에 그대로 쓸 문장]
+[왜 API로 감싸는가]
 노트북 안의 모델은 그 노트북을 연 사람만 쓸 수 있습니다.
 API로 감싸는 순간 대시보드, 다른 서비스, 다른 팀이 같은 기능을 호출할 수 있습니다.
 "모델을 만들었다"와 "모델을 남이 쓸 수 있게 만들었다" 사이의 경계가 여기입니다.
@@ -87,8 +87,11 @@ def ask_endpoint(req: AskRequest) -> AskResponse:
         traceback.print_exc()
         raise HTTPException(
             status_code=502,
+            # 원인을 단정하지 않습니다. 벡터DB 누락·CSV 손상 같은 로컬 문제도
+            # 같은 경로로 들어오는데, "크레딧을 확인하라"고만 하면 엉뚱한 곳을 보게 됩니다.
             detail=f"질의 처리에 실패했습니다 ({type(e).__name__}). "
-                   "LLM API 상태와 크레딧 잔액을 확인한 뒤 다시 시도하세요.",
+                   "서버 로그에서 전체 오류를 확인하세요. "
+                   "자주 있는 원인: LLM API 장애·크레딧 소진, 벡터DB 미생성(python -m src.ingest).",
         ) from e
 
     return AskResponse(**result)

@@ -140,7 +140,8 @@ def query_defect_stats(
     '몇 개', '평균', '분포' 처럼 세거나 집계하는 질문에 사용하세요.
 
     Args:
-        verdict: "PASS" 또는 "REJECT" 로 필터
+        verdict: 정답 라벨("PASS"/"REJECT")로 필터. 모델 판정이 아니라 **실제 라벨**입니다.
+                 (모델 판정 건수가 궁금하면 simulate_threshold 를 쓰세요)
         defect_type: 결함 종류로 필터 (예: "Pollution", "Damaged")
         max_confidence: 이 값 이하의 confidence 만 필터
     """
@@ -158,7 +159,7 @@ def query_defect_stats(
     if verdict is not None:
         # .upper() : "reject" 처럼 소문자로 들어와도 동작하게. LLM 출력은 일정하지 않습니다.
         df = df[df["true_label"] == verdict.upper()]
-        applied_filters.append(f"판정={verdict.upper()}")
+        applied_filters.append(f"정답라벨={verdict.upper()}")
 
     if defect_type is not None:
         # ★ 대소문자를 무시하고 맞춥니다 (2026-10-06 버그 수정).
